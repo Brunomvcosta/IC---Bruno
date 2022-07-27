@@ -1,54 +1,58 @@
 ﻿
 
+
 EXPORT qui_quad(inFile,
                Par1,
-               Par2) := FUNCTIONMACRO //(Dataset, first parameter, second parameter)
+               Par2) := FUNCTIONMACRO
 							 
-	Layout_reduced := RECORD
-		Var1 := inFile.Par1;
-		Var2 := inFile.Par2;
+	Layout_reduzido := RECORD
+		Variavel1 := (STRING)inFile.Par1;
+		Variavel2 := (STRING)inFile.Par2;
 	END;
-	reduced_file := TABLE( inFile, Layout_reduced);
+	//Crimes_reduzido := TABLE( Crimes((primary_type = 'THEFT' OR  primary_type = 'BATTERY' OR primary_type = 'CRIMINAL DAMAGE' OR primary_type = 'NARCOTICS') AND (location_description = 'STREET' OR location_description = 'SIDEWALK' OR location_description = 'RESIDENCE')), layout_reduzido);
+	reduced_file := TABLE( inFile, layout_reduzido);
 
-	//Degrees of freedom
-	Layout_grouped_1 := RECORD	
-		reduced_file.Var1;
+	//Calculando graus de liberdade
+	Layout_agrupado_1 := RECORD	
+		reduced_file.Variavel1;
 		cnt := COUNT(GROUP);
 		END;
-	tot1 := COUNT(SORT(TABLE(reduced_file, Layout_grouped_1,Var1),Var1));
-	Layout_grouped_2 := RECORD	
-		reduced_file.Var2;
+	tot1 := COUNT(SORT(TABLE(reduced_file, Layout_agrupado_1,Variavel1),Variavel1));
+
+	Layout_agrupado_2 := RECORD	
+		reduced_file.Variavel2;
 		cnt := COUNT(GROUP);
 		END;
-	tot2 := COUNT(SORT(TABLE(reduced_file, Layout_grouped_2, Var2), Var2)) ;
+	tot2 := COUNT(SORT(TABLE(reduced_file, Layout_agrupado_2, Variavel2), Variavel2)) ;
 
 
 
-Layout_grouped := RECORD	
-	Var1 := reduced_file.Var1;
-	Var2 := reduced_file.Var2;
+Layout_agrupado := RECORD	
+	Variavel1 := reduced_file.Variavel1;
+	Variavel2 := reduced_file.Variavel2;
 	cnt := COUNT(GROUP);
 	END;
-Observed_matrix_1 := SORT(TABLE(reduced_file, Layout_agrupado,Var1, Var2),Var1, Var2) ;
+Matriz_observada_1 := SORT(TABLE(reduced_file, Layout_agrupado,Variavel1, Variavel2),Variavel1, Variavel2) ;
 
 //Preenchendo matriz observada
-Layout_observed_1 := RECORD
-	Variavel1 := Observed_matrix_1.Var1;
-	Variavel2 := Observed_matrix_1.Var2;
+Layout_observada_1 := RECORD
+	Variavel1 := Matriz_observada_1.Variavel1;
+	Variavel2 := Matriz_observada_1.Variavel2;
 	UNSIGNED4 cnt;
 END;
-Observed_matrix_1 colocar_0(Observed_matrix_1 L, Observed_matrix_1 R) := TRANSFORM
-	SELF.Var1 := L.Var1;
-	SELF.Var2 := R.Var2;
+Layout_observada_1 colocar_0(Matriz_observada_1 L, Matriz_observada_1 R) := TRANSFORM
+	SELF.Variavel1 := L.Variavel1;
+	SELF.Variavel2 := R.Variavel2;
 	SELF.cnt := 0;
 END;
-Matriz_zerada := SORT(JOIN(Observed_matrix_1, Observed_matrix_1, (LEFT.Var1 = RIGHT.Var2 OR LEFT.Var1 != RIGHT.Var2), colocar_0(LEFT, RIGHT),ALL), Var1, Var2);
+Matriz_zerada := SORT(JOIN(Matriz_observada_1, Matriz_observada_1, (LEFT.Variavel1 = RIGHT.Variavel2 OR LEFT.Variavel1 != RIGHT.Variavel2), colocar_0(LEFT, RIGHT),ALL), Variavel1, Variavel2);
 Layout_observada_1 colocar_valores(Matriz_zerada L, Matriz_observada_1 R) := TRANSFORM
-	SELF.Variavel1 := L.Var1;
-	SELF.Variavel2 := L.Var2;
-	SELF.cnt := IF(L.Var2 = R.Var2, R.cnt, 0);
+	SELF.Variavel1 := L.Variavel1;
+	SELF.Variavel2 := L.Variavel2;
+	SELF.cnt := IF(L.Variavel2 = R.Variavel2, R.cnt, 0);
 END;
-Matriz_observada_2 := SORT(JOIN(Matriz_zerada, Matriz_observada_1, (LEFT.Var1 = RIGHT.Var1), colocar_valores(LEFT, RIGHT),ALL), Var1, Var2);
+Matriz_observada_2 := DEDUP(SORT(JOIN(Matriz_zerada, Matriz_observada_1, (LEFT.Variavel1 = RIGHT.Variavel1), colocar_valores(LEFT, RIGHT),ALL), Variavel1, Variavel2, cnt), Variavel1, Variavel2, right);
+
 //output(Matriz_observada_2);
 total := SUM(Matriz_observada_2, cnt);
 //OUTPUT(total);
@@ -58,33 +62,36 @@ total := SUM(Matriz_observada_2, cnt);
 
 //Preenchendo matriz esperada
 Layout_totais_1 := RECORD
-	Var1 := reduced_file.Var1;
-	Var2 := reduced_file.Var2;
+	Variavel1 := reduced_file.Variavel1;
+	Variavel2 := reduced_file.Variavel2;
 	UNSIGNED4 cnt;
 END;
 Layout_totais_1 calculo_E_1(Matriz_observada_2 L) := TRANSFORM
-	SELF.Var1 := L.Var1;
-	SELF.Var2 := L.Var2;
-	SELF.cnt := (SUM(Matriz_observada_2(Var1 =L.Var1) , cnt)/SUM(Matriz_observada_2, cnt))*(SUM(Matriz_observada_2(Var2 =L.Var2), cnt)/SUM(Matriz_observada_2, cnt))*SUM(Matriz_observada_2, cnt);
+	SELF.Variavel1 := L.Variavel1;
+	SELF.Variavel2 := L.Variavel2;
+	SELF.cnt := (SUM(Matriz_observada_2(Variavel1 =L.Variavel1) , cnt)/SUM(Matriz_observada_2, cnt))*(SUM(Matriz_observada_2(Variavel2 =L.Variavel2), cnt)/SUM(Matriz_observada_2, cnt))*SUM(Matriz_observada_2, cnt);
 END;
 Matriz_esperada_1 := PROJECT(Matriz_observada_2, calculo_E_1(LEFT));
 //OUTPUT(Matriz_esperada_1, NAMED('Valores_esperados'));
 
 
 	//calculando qui quadrado
+	
 	Layout_chi_quadrado := RECORD
 		REAL4 chi;
 	END;
 	Layout_chi_quadrado calculo_X(Matriz_observada_2 L, Matriz_esperada_1 R) := TRANSFORM
 		SELF.chi := (L.cnt-R.cnt)*(L.cnt-R.cnt)/R.cnt;
 	END;
-	Chi := SUM(JOIN(Matriz_observada_2,Matriz_esperada_1, (LEFT.Var1 = RIGHT.Var1 AND  LEFT.Var2 = RIGHT.Var2), calculo_X(LEFT, RIGHT)),chi);
+	Chi := SUM(JOIN(Matriz_observada_2,Matriz_esperada_1, (LEFT.Variavel1 = RIGHT.Variavel1 AND  LEFT.Variavel2 = RIGHT.Variavel2), calculo_X(LEFT, RIGHT)),chi);
 	//OUTPUT(Chi, NAMED('Chiquadrado'));
 	z_alpha := 2*SQRT(Chi)-SQRT(2*((tot1-1)*(tot2-1))-1);
 	//output(z_alpha, NAMED('z_alpha'));
 	RETURN DATASET([{Chi, z_alpha,(tot1-1)*(tot2-1) }],{REAL4 qui_quadrado, REAL4 zalpha, UNSIGNED3 Graus_de_liberdade});
-	//RETURN Chi;
+
+	//RETURN Matriz_esperada_1;
 ENDMACRO;
+
 
 
 
