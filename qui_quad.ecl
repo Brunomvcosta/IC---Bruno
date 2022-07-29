@@ -1,6 +1,3 @@
-﻿
-
-
 EXPORT qui_quad(inFile,
                Par1,
                Par2) := FUNCTIONMACRO
@@ -43,21 +40,22 @@ END;
 Layout_observada_1 colocar_0(Matriz_observada_1 L, Matriz_observada_1 R) := TRANSFORM
 	SELF.Variavel1 := L.Variavel1;
 	SELF.Variavel2 := R.Variavel2;
-	SELF.cnt := 0;
+	SELF.cnt := IF(L.Variavel2 = R.Variavel2 AND L.Variavel1 = R.Variavel1, R.cnt, 0);
 END;
-Matriz_zerada := SORT(JOIN(Matriz_observada_1, Matriz_observada_1, (LEFT.Variavel1 = RIGHT.Variavel2 OR LEFT.Variavel1 != RIGHT.Variavel2), colocar_0(LEFT, RIGHT),ALL), Variavel1, Variavel2);
+Matriz_observada_2 := DEDUP(SORT(JOIN(Matriz_observada_1, Matriz_observada_1, (LEFT.Variavel1 = RIGHT.Variavel2 OR LEFT.Variavel1 != RIGHT.Variavel2), colocar_0(LEFT, RIGHT),ALL), Variavel1, Variavel2, -cnt), Variavel1, Variavel2);
+/*
 Layout_observada_1 colocar_valores(Matriz_zerada L, Matriz_observada_1 R) := TRANSFORM
 	SELF.Variavel1 := L.Variavel1;
 	SELF.Variavel2 := L.Variavel2;
-	SELF.cnt := IF(L.Variavel2 = R.Variavel2, R.cnt, 0);
+	SELF.cnt := IF(L.Variavel2 = R.Variavel2 AND L.Variavel1 = R.Variavel1, R.cnt, 0);
 END;
-Matriz_observada_2 := DEDUP(SORT(JOIN(Matriz_zerada, Matriz_observada_1, (LEFT.Variavel1 = RIGHT.Variavel1), colocar_valores(LEFT, RIGHT),ALL), Variavel1, Variavel2, cnt), Variavel1, Variavel2, right);
+Matriz_observada_2 := SORT(JOIN(Matriz_zerada, Matriz_observada_1, (LEFT.Variavel1 = RIGHT.Variavel1), colocar_valores(LEFT, RIGHT),ALL), Variavel1, Variavel2, cnt);
 
 //output(Matriz_observada_2);
 total := SUM(Matriz_observada_2, cnt);
 //OUTPUT(total);
 //OUTPUT(Matriz_observada_2, NAMED('Valores_observados'));
-
+*/
 
 
 //Preenchendo matriz esperada
@@ -89,8 +87,9 @@ Matriz_esperada_1 := PROJECT(Matriz_observada_2, calculo_E_1(LEFT));
 	//output(z_alpha, NAMED('z_alpha'));
 	RETURN DATASET([{Chi, z_alpha,(tot1-1)*(tot2-1) }],{REAL4 qui_quadrado, REAL4 zalpha, UNSIGNED3 Graus_de_liberdade});
 
-	//RETURN Matriz_esperada_1;
+	//RETURN Matriz_zerada;
 ENDMACRO;
+
 
 
 
