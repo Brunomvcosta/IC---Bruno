@@ -1,9 +1,10 @@
-﻿IMPORT $, std, Visualizer, Arquivos, KMeans, ML_Core;
+IMPORT $, std, Visualizer, Arquivos, KMeans, ML_Core;
 Crimes := $.File_Crimes.File;
+//numero de centroides
 k := 3;
 
 
-
+//reduzindo  o dataset
 Layout_reduzido := RECORD
 	Primary_type := Crimes.Primary_type;
 	community_area := Crimes.community_area;
@@ -11,6 +12,7 @@ Layout_reduzido := RECORD
 END;
 reduced_file := TABLE( Crimes (Year = '2001'), Layout_reduzido);
 
+//Colocando um campo de ID do tipo de crime
 contador_Primary_type := RECORD
 	UNSIGNED2 codigo_Primary_type := 0;
 	reduced_file.Primary_type;
@@ -18,6 +20,7 @@ contador_Primary_type := RECORD
 END;
 IDs := SORT(TABLE( reduced_file, contador_Primary_type, Primary_type), Primary_type);
 
+//Cruando o ID de cada tipo de crime
 Layout_dummy_Primary_type := RECORD
 	UNSIGNED2 codigo_Primary_type := 0;
 	reduced_file.Primary_type;
@@ -27,7 +30,7 @@ Layout_dummy_Primary_type coloca_ID (IDs Le, INTEGER C) := TRANSFORM
 	 SELF := Le;
 END;
 dummy_Primary_type := PROJECT(IDs, coloca_ID(LEFT, COUNTER));
-
+//Discretizando a hora
 Layout_resumo := RECORD
 	UNSIGNED2 codigo_Primary_type := 0;
 	community_area := reduced_file.community_area;
@@ -36,6 +39,7 @@ Layout_resumo := RECORD
 	STRING2 segundo := '00';
 	STRING2 AMPM := '00';
 END;
+//Colocando o ID de cada tipo de crime e discretizando a hora
 Layout_resumo transf1 (reduced_file Le, dummy_Primary_type R) := TRANSFORM
    SELF.hora  :=  (Le.date[12] + Le.date[13]);
 	 SELF.minuto := Le.date[15] + Le.date[16];
@@ -45,7 +49,7 @@ Layout_resumo transf1 (reduced_file Le, dummy_Primary_type R) := TRANSFORM
 	 SELF := Le;
 END;
 Hora_em_string := JOIN(reduced_file, dummy_Primary_type, (LEFT.Primary_type = RIGHT.Primary_type), transf1(LEFT, RIGHT),ALL);
-
+//Transformando a hora de string em numero real
 Layout_resumo2 := RECORD
 	Hora_em_string.codigo_Primary_type;
 	Hora_em_string.community_area;
@@ -56,7 +60,7 @@ Layout_resumo2 := RECORD
 END;
 Hora_separada := TABLE(Hora_em_string, Layout_resumo2);
 
-
+//juntando hora, minuto e segundo em um unico campo decimal
 Layout_final := RECORD
 	UNSIGNED4 id;
 	Hora_em_string.codigo_Primary_type;
@@ -71,6 +75,7 @@ Layout_final transf2 (Hora_separada Le, INTEGER C) := TRANSFORM
 END;
 Final := PROJECT(Hora_separada, transf2(LEFT, COUNTER));
 
+//Selecionando k centroides aleatorios
 Layout_com_aleatorio := RECORD
 	UNSIGNED4 rnd;
 	id := Final.id;
