@@ -3,7 +3,7 @@
 #OPTION('OutputLimitMB','257');
 #OPTION('WUResultMaxSizeMB','257');
 IMPORT $, std, Visualizer, Arquivos, KMeans, ML_Core_2;
-Crimes := $.File_Crimes.File;
+Crimes := $.File_Crimes.File (Year='2021');
 OUTPUT(Crimes);
 //----------------------------------------Distancia lat/lon -------------------------------------------------
 Layout_lat_lon := RECORD
@@ -121,7 +121,7 @@ Layout_final2 := RECORD
 END;
 //OUTPUT(Crimes_final);
 IMPORT Python3 AS Python;  
-//OUTPUT(CHOOSEN(Crimes_final,300000),,'~bmvc::class::intro::teste2',CSV);													 								
+OUTPUT(CHOOSEN(Crimes_final,800000),,'~bmvc::class::intro::base_1_anos_03.21',CSV);													 								
 
 
 // Declaracao da funcao de conversao das informacoes binarias do blob em formato relacional
